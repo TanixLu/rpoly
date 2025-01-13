@@ -1,0 +1,15 @@
+[package]
+name = "rpoly"
+version = "0.1.0"
+edition = "2021"
+authors = ["Tanix <txlu@mail.ustc.edu.cn>"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+include = ["src/", "LICENSE-APACHE", "LICENSE-MIT"]
+description = "Use the RPOLY algorithm to solve for all real roots of a univariate polynomial"
+documentation = "https://docs.rs/rpoly"
+repository = "https://github.com/TanixLu/rpoly"
+keywords = ["rpoly", "poly", "polynomial", "numerical", "root", "root-finding", "root", "math"]
+categories = ["algorithms", "mathematics"]
+
+[dependencies]
