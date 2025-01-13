@@ -9,7 +9,7 @@ include = ["src/", "LICENSE-APACHE", "LICENSE-MIT"]
 description = "Use the RPOLY algorithm to solve for all real roots of a univariate polynomial"
 documentation = "https://docs.rs/rpoly"
 repository = "https://github.com/TanixLu/rpoly"
-keywords = ["rpoly", "poly", "polynomial", "numerical", "root", "root-finding", "root", "math"]
+keywords = ["polynomial", "numerical", "roots", "root-finding", "math"]
 categories = ["algorithms", "mathematics"]
 
 [dependencies]
