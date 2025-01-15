@@ -152,7 +152,7 @@ fn rpoly_ak1<const MDP1: usize>(
                 for i in 1..NN {
                     ff = ff * xm + pt[i];
                 }
-                if ff <= 0.0 {
+                if !(ff > 0.0) {
                     break;
                 }
             }
@@ -459,7 +459,7 @@ fn Fxshfr_ak1<const MDP1: usize>(
 
                     // Try quadratic iteration if it has not been tried and the v sequence is converging
 
-                    if !vpass || vtry {
+                    if !(vpass && !vtry) {
                         break;
                     }
                 } // End do-while loop
@@ -624,6 +624,115 @@ fn QuadIT_ak1(
     h: &mut f64,
     K: &mut [f64],
 ) {
+    // Variable-shift K-polynomial iteration for a quadratic factor converges only if the
+    // zeros are equimodular or nearly so.
+
+    let mut j = 0;
+    let mut triedFlag = false;
+    let mut tFlag = 0;
+
+    let mut relstp = 0.0;
+    let mut omp = 0.0;
+    let mut ui = 0.0;
+    let mut vi = 0.0;
+    let mut c = 0.0;
+
+    *NZ = 0; // Number of zeros found
+             // uu and vv are coefficients of the starting quadratic
+    let mut u = uu;
+    let mut v = vv;
+
+    loop {
+        Quad_ak1(1.0, u, v, szr, szi, lzr, lzi);
+
+        // Return if roots of the quadratic are real and not close to multiple or nearly
+        // equal and of opposite sign.
+
+        if fabs(fabs(*szr) - fabs(*lzr)) > 0.01 * fabs(*lzr) {
+            break;
+        }
+
+        // Evaluate polynomial by quadratic synthetic division
+
+        QuadSD_ak1(NN, u, v, p, qp, a, b);
+
+        let mut mp = fabs(-((*szr) * (*b)) + (*a)) + fabs((*szi) * (*b));
+
+        // Compute a rigorous bound on the rounding error in evaluating p
+
+        let mut zm = sqrt(fabs(v));
+        let mut ee = 2.0 * fabs(qp[0]);
+        let mut t = -((*szr) * (*b));
+
+        for i in 1..N {
+            ee = ee * zm + fabs(qp[i]);
+        }
+
+        ee = ee * zm + fabs((*a) + t);
+        ee = (9.0 * ee + 2.0 * fabs(t) - 7.0 * (fabs((*a) + t) + zm * fabs((*b)))) * DBL_EPSILON;
+
+        // Iteration has converged sufficiently if the polynomial value is less than 20 times this bound
+
+        if mp <= 20.0 * ee {
+            *NZ = 2;
+            break;
+        }
+
+        j += 1;
+
+        // Stop iteration after 20 steps
+        if j > 20 {
+            break;
+        }
+
+        if j >= 2 {
+            if (relstp <= 0.01) && (mp >= omp) && (!triedFlag) {
+                // A cluster appears to be stalling the convergence. Five fixed shift
+                // steps are taken with a u, v close to the cluster.
+
+                relstp = if relstp < DBL_EPSILON {
+                    sqrt(DBL_EPSILON)
+                } else {
+                    sqrt(relstp)
+                };
+
+                u -= u * relstp;
+                v += v * relstp;
+
+                QuadSD_ak1(NN, u, v, p, qp, a, b);
+
+                for i in 0..5 {
+                    tFlag = calcSC_ak1(N, *a, *b, a1, a3, a7, &mut c, d, e, f, g, h, K, u, v, qk);
+                    nextK_ak1(N, tFlag, *a, *b, *a1, a3, a7, K, qk, qp);
+                }
+
+                triedFlag = true;
+                j = 0;
+            }
+        }
+
+        omp = mp;
+
+        // Calculate next K polynomial and new u and v
+
+        tFlag = calcSC_ak1(N, *a, *b, a1, a3, a7, &mut c, d, e, f, g, h, K, u, v, qk);
+        nextK_ak1(N, tFlag, *a, *b, *a1, a3, a7, K, qk, qp);
+        tFlag = calcSC_ak1(N, *a, *b, a1, a3, a7, &mut c, d, e, f, g, h, K, u, v, qk);
+        newest_ak1(
+            tFlag, &mut ui, &mut vi, *a, *a1, *a3, *a7, *b, c, *d, *f, *g, *h, u, v, K, N, p,
+        );
+
+        // If vi is zero, the iteration is not converging
+        if vi != 0.0 {
+            relstp = fabs((-v + vi) / vi);
+            u = ui;
+            v = vi;
+        }
+
+        if vi == 0.0 {
+            break;
+        }
+    }
 }
 
 fn newest_ak1(
@@ -832,9 +941,11 @@ fn Quad_ak1(a: f64, b1: f64, c: f64, sr: &mut f64, si: &mut f64, lr: &mut f64, l
 }
 
 #[test]
-fn test_rpoly() {
+fn test_real_roots() {
+    const TEST_TIMES: usize = 10000;
+    const MAX_DIFF: f64 = 1e-6;
     const MAX_REAL_ROOT_NUM: usize = 5;
-    const MAX_COMPLEX_PAIR_NUM: usize = 5;
+    const MAX_COMPLEX_PAIR_NUM: usize = MAX_REAL_ROOT_NUM;
     const MAX_ROOT_NUM: usize = MAX_REAL_ROOT_NUM + 2 * MAX_COMPLEX_PAIR_NUM;
     const MDP1: usize = MAX_ROOT_NUM + 1;
 
@@ -842,9 +953,12 @@ fn test_rpoly() {
 
     let mut rng = thread_rng();
 
-    for _ in 0..1 {
+    let mut max_diff = 0.0;
+
+    for _ in 0..TEST_TIMES {
         let real_root_num = rng.gen_range(0..=MAX_REAL_ROOT_NUM);
         let complex_root_pair_num = rng.gen_range(0..=MAX_COMPLEX_PAIR_NUM);
+        let complex_root_pair_num = 0;
 
         let mut real_roots = [0.0; MAX_REAL_ROOT_NUM];
         for i in 0..real_root_num {
@@ -863,11 +977,11 @@ fn test_rpoly() {
         }
 
         // generate coefficients
-        let mut op = [0.0; MDP1];
+        let mut op = [0.0f64; MDP1];
         op[0] = 1.0;
         for i in 0..real_root_num {
             let n = i + 1;
-            for j in 1..n + 1 {
+            for j in (1..n + 1).rev() {
                 op[j] += op[j - 1] * (-real_roots[i]);
             }
         }
@@ -875,7 +989,7 @@ fn test_rpoly() {
             let n = real_root_num + 2 * i + 1;
             let a = complex_roots_re[i];
             let b = complex_roots_im[i];
-            for j in 1..n + 2 {
+            for j in (1..n + 2).rev() {
                 if j - 1 < n {
                     op[j] += op[j - 1] * (-2.0 * a);
                 }
@@ -886,26 +1000,69 @@ fn test_rpoly() {
         }
 
         let mut Degree = real_root_num + 2 * complex_root_pair_num;
+        if op[Degree].is_nan() {
+            continue;
+        }
+
         let mut zeror = [0.0; MDP1];
         let mut zeroi = [0.0; MDP1];
-        rpoly_ak1(&op, &mut Degree, &mut zeror, &mut zeroi);
+        dbg!(op);
+        for i in 0..Degree + 1 {
+            if Degree - i > 0 {
+                print!("{} * x ^ {} + ", op[i], Degree - i);
+            } else {
+                println!("{} == 0.0", op[i]);
+            }
+        }
+        dbg!(real_root_num);
+        dbg!(complex_root_pair_num);
         dbg!(Degree);
-        dbg!(zeror);
-        dbg!(zeroi);
-    }
+        println!();
+        dbg!(&real_roots[..real_root_num]);
+        println!("\ncomplex_roots: ");
+        for i in 0..complex_root_pair_num {
+            println!("{} + {} i", complex_roots_re[i], complex_roots_im[i].abs());
+            println!("{} - {} i", complex_roots_re[i], complex_roots_im[i].abs());
+        }
 
-    // let mut Degree = 4;
-    // let op = [
-    //     323752928628.60541,
-    //     9730768832.4398994,
-    //     128621978.7391808,
-    //     0.039863987093239961,
-    //     3.0887751478756638e-12,
-    // ];
-    // let mut zeror = [0.0; 5];
-    // let mut zeroi = [0.0; 5];
-    // rpoly_ak1(&op, &mut Degree, &mut zeror, &mut zeroi);
-    // dbg!(Degree);
-    // dbg!(zeror);
-    // dbg!(zeroi);
+        rpoly_ak1(&op, &mut Degree, &mut zeror, &mut zeroi);
+        println!("\nall rpoly roots: ");
+        for i in 0..Degree {
+            if zeroi[i] >= 0.0 {
+                println!("{} + {} i", zeror[i], zeroi[i]);
+            } else {
+                println!("{} - {} i", zeror[i], zeroi[i].abs());
+            }
+        }
+
+        for i in 0..Degree {
+            let mut min_diff = f64::MAX;
+            if zeroi[i] == 0.0 {
+                for j in 0..real_root_num {
+                    if (real_roots[j] - zeror[i]).abs() < min_diff {
+                        min_diff = (real_roots[j] - zeror[i]).abs();
+                    }
+                }
+            } else {
+                for j in 0..complex_root_pair_num {
+                    let diff1 = sqrt(
+                        (zeror[i] - complex_roots_re[j]).powi(2)
+                            + (zeroi[i] - complex_roots_im[j]).powi(2),
+                    );
+                    let diff2 = sqrt(
+                        (zeror[i] - complex_roots_re[j]).powi(2)
+                            + (zeroi[i] + complex_roots_im[j]).powi(2),
+                    );
+                    min_diff = min_diff.min(diff1).min(diff2);
+                }
+            }
+            if min_diff > max_diff {
+                max_diff = min_diff;
+            }
+        }
+
+        dbg!(max_diff);
+
+        // break;
+    }
 }
