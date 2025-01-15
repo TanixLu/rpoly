@@ -13,3 +13,4 @@ keywords = ["polynomial", "numerical", "roots", "root-finding", "math"]
 categories = ["algorithms", "mathematics"]
 
 [dependencies]
+rand = "0.8.5"

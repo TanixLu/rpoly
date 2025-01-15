@@ -1,3 +1,1 @@
-pub fn test() {
-    println!("hello, rpoly!");
-}
+mod rpoly_ak1;
