@@ -216,8 +216,6 @@ fn rpoly_ak1<const MDP1: usize>(
 
             // Loop to select the quadratic corresponding to each new shift
 
-            let mut jj = 0;
-
             for jj in 1..=20 {
                 // Quadratic corresponds to a double shift to a non-real point and its
                 // complex conjugate. The point has modulus BND and amplitude rotated
@@ -274,13 +272,13 @@ fn rpoly_ak1<const MDP1: usize>(
                         K[i] = temp[i];
                     }
                 }
-            } // End for jj
 
-            // Return with failure if no convergence with 20 shifts
-            if jj > 20 {
-                // TODO: replace panic with Error
-                panic!("Failure. No convergence after 20 shifts. Program terminated.");
-            }
+                // Return with failure if no convergence with 20 shifts
+                if jj == 20 {
+                    // TODO: replace panic with Error
+                    panic!("Failure. No convergence after 20 shifts. Program terminated.");
+                }
+            } // End for jj
         } // End while (N >= 1)
     } else {
         // *Degree = 0;
@@ -669,7 +667,7 @@ fn QuadIT_ak1(
         }
 
         ee = ee * zm + fabs((*a) + t);
-        ee = (9.0 * ee + 2.0 * fabs(t) - 7.0 * (fabs((*a) + t) + zm * fabs((*b)))) * DBL_EPSILON;
+        ee = (9.0 * ee + 2.0 * fabs(t) - 7.0 * (fabs((*a) + t) + zm * fabs(*b))) * DBL_EPSILON;
 
         // Iteration has converged sufficiently if the polynomial value is less than 20 times this bound
 
@@ -943,126 +941,103 @@ fn Quad_ak1(a: f64, b1: f64, c: f64, sr: &mut f64, si: &mut f64, lr: &mut f64, l
 #[test]
 fn test_real_roots() {
     const TEST_TIMES: usize = 10000;
-    const MAX_DIFF: f64 = 1e-6;
-    const MAX_REAL_ROOT_NUM: usize = 5;
-    const MAX_COMPLEX_PAIR_NUM: usize = MAX_REAL_ROOT_NUM;
-    const MAX_ROOT_NUM: usize = MAX_REAL_ROOT_NUM + 2 * MAX_COMPLEX_PAIR_NUM;
-    const MDP1: usize = MAX_ROOT_NUM + 1;
+    const MAX_DIFF: f64 = 1.0;
+    const MAX_REAL_ROOTS_NUM: usize = 5;
+    const MDP1: usize = MAX_REAL_ROOTS_NUM + 1;
 
     use rand::{thread_rng, Rng};
 
     let mut rng = thread_rng();
 
-    let mut max_diff = 0.0;
+    let mut max_diff = 0.0f64;
 
-    for _ in 0..TEST_TIMES {
-        let real_root_num = rng.gen_range(0..=MAX_REAL_ROOT_NUM);
-        let complex_root_pair_num = rng.gen_range(0..=MAX_COMPLEX_PAIR_NUM);
-        let complex_root_pair_num = 0;
+    for T in 0..TEST_TIMES {
+        let real_roots_num = rng.gen_range(0..=MAX_REAL_ROOTS_NUM);
 
-        let mut real_roots = [0.0; MAX_REAL_ROOT_NUM];
-        for i in 0..real_root_num {
+        let mut real_roots = [0.0; MAX_REAL_ROOTS_NUM];
+        for i in 0..real_roots_num {
             if rng.gen_bool(0.9) {
-                real_roots[i] = rng.gen_range(-10000.0..10000.0);
-            }
-        }
-
-        let mut complex_roots_re = [0.0; MAX_COMPLEX_PAIR_NUM];
-        let mut complex_roots_im = [0.0; MAX_COMPLEX_PAIR_NUM];
-        for i in 0..complex_root_pair_num {
-            complex_roots_im[i] = rng.gen_range(-10000.0..10000.0);
-            if rng.gen_bool(0.9) {
-                complex_roots_re[i] = rng.gen_range(-10000.0..10000.0);
+                if rng.gen_bool(0.5) {
+                    real_roots[i] = rng.gen_range(-1e9..1e9);
+                } else {
+                    loop {
+                        let under = rng.gen_range(-1e9..1e9);
+                        if under != 0.0 {
+                            real_roots[i] = 1.0 / under;
+                            break;
+                        }
+                    }
+                }
             }
         }
 
         // generate coefficients
         let mut op = [0.0f64; MDP1];
         op[0] = 1.0;
-        for i in 0..real_root_num {
+        for i in 0..real_roots_num {
             let n = i + 1;
             for j in (1..n + 1).rev() {
                 op[j] += op[j - 1] * (-real_roots[i]);
             }
         }
-        for i in 0..complex_root_pair_num {
-            let n = real_root_num + 2 * i + 1;
-            let a = complex_roots_re[i];
-            let b = complex_roots_im[i];
-            for j in (1..n + 2).rev() {
-                if j - 1 < n {
-                    op[j] += op[j - 1] * (-2.0 * a);
-                }
-                if j >= 2 {
-                    op[j] += op[j - 2] * (a * a + b * b);
-                }
-            }
-        }
 
-        let mut Degree = real_root_num + 2 * complex_root_pair_num;
-        if op[Degree].is_nan() {
-            continue;
-        }
+        // *************** debug ***************
+        // dbg!(op);
+        // for i in 0..real_roots_num + 1 {
+        //     if real_roots_num - i > 0 {
+        //         print!("{} * x ^ {} + ", op[i], real_roots_num - i);
+        //     } else {
+        //         println!("{} == 0.0", op[i]);
+        //     }
+        // }
+        // dbg!(real_roots_num);
+        // println!();
+        // dbg!(&real_roots[..real_roots_num]);
 
+        let mut Degree = real_roots_num;
         let mut zeror = [0.0; MDP1];
         let mut zeroi = [0.0; MDP1];
-        dbg!(op);
-        for i in 0..Degree + 1 {
-            if Degree - i > 0 {
-                print!("{} * x ^ {} + ", op[i], Degree - i);
-            } else {
-                println!("{} == 0.0", op[i]);
-            }
-        }
-        dbg!(real_root_num);
-        dbg!(complex_root_pair_num);
-        dbg!(Degree);
-        println!();
-        dbg!(&real_roots[..real_root_num]);
-        println!("\ncomplex_roots: ");
-        for i in 0..complex_root_pair_num {
-            println!("{} + {} i", complex_roots_re[i], complex_roots_im[i].abs());
-            println!("{} - {} i", complex_roots_re[i], complex_roots_im[i].abs());
-        }
-
         rpoly_ak1(&op, &mut Degree, &mut zeror, &mut zeroi);
-        println!("\nall rpoly roots: ");
-        for i in 0..Degree {
-            if zeroi[i] >= 0.0 {
-                println!("{} + {} i", zeror[i], zeroi[i]);
-            } else {
-                println!("{} - {} i", zeror[i], zeroi[i].abs());
-            }
-        }
+
+        // *************** debug ***************
+        // dbg!(Degree);
+        // println!("\nall rpoly roots: ");
+        // for i in 0..Degree {
+        //     if zeroi[i] >= 0.0 {
+        //         println!("{} + {} i", zeror[i], zeroi[i]);
+        //     } else {
+        //         println!("{} - {} i", zeror[i], zeroi[i].abs());
+        //     }
+        // }
 
         for i in 0..Degree {
-            let mut min_diff = f64::MAX;
-            if zeroi[i] == 0.0 {
-                for j in 0..real_root_num {
-                    if (real_roots[j] - zeror[i]).abs() < min_diff {
-                        min_diff = (real_roots[j] - zeror[i]).abs();
-                    }
-                }
+            let x = if zeroi[i] == 0.0 {
+                zeror[i]
             } else {
-                for j in 0..complex_root_pair_num {
-                    let diff1 = sqrt(
-                        (zeror[i] - complex_roots_re[j]).powi(2)
-                            + (zeroi[i] - complex_roots_im[j]).powi(2),
-                    );
-                    let diff2 = sqrt(
-                        (zeror[i] - complex_roots_re[j]).powi(2)
-                            + (zeroi[i] + complex_roots_im[j]).powi(2),
-                    );
-                    min_diff = min_diff.min(diff1).min(diff2);
-                }
+                sqrt(zeror[i].powi(2) + zeroi[i].powi(2))
+            };
+
+            let mut eval = op[0];
+            let mut derive = op[0] * real_roots_num as f64;
+            for j in 1..real_roots_num + 1 {
+                eval = x * eval + op[j];
+                derive = x * derive + op[j] * (real_roots_num - j) as f64;
             }
-            if min_diff > max_diff {
-                max_diff = min_diff;
-            }
+
+            let diff = if derive != 0.0 {
+                eval / derive
+            } else {
+                eval * 1e10
+            };
+
+            max_diff = max_diff.max(diff.abs());
         }
 
-        dbg!(max_diff);
-
-        // break;
+        // dbg!(max_diff);
+        if max_diff > MAX_DIFF {
+            dbg!(T);
+            assert!(false);
+        }
     }
+    dbg!(max_diff);
 }
