@@ -229,7 +229,7 @@ pub fn rpoly_ak1<const MDP1: usize>(
                 // by 94 degrees from the previous shift.
 
                 let xxx = -(sinr * yy) + cosr * xx;
-                yy = sinr * xx * cosr * yy;
+                yy = sinr * xx + cosr * yy;
                 xx = xxx;
                 let sr = bnd * xx;
 
