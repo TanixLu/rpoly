@@ -7,7 +7,7 @@
 //! The primary entry point is the [`rpoly`] function, which returns the roots of a polynomial of
 //! degree \(n - 1\). The polynomial is expressed in the form
 //!
-//! \[ a\[0\] * x^(n-1) + a\[1\] * x^(n-2) + ... + a\[n-2\] * x + a\[n-1\] = 0 \],
+//! a\[0\]*x^(n-1) + a\[1\]*x^(n-2) + ... + a\[n-2\]*x + a\[n-1\] = 0
 //!
 //! where `n == MDP1`. Thus, `a.len()` must be `MDP1`, and the degree is `MDP1 - 1`. It is essential
 //! that `a[0] != 0.0` (the leading coefficient must not be zero).
@@ -50,7 +50,7 @@ pub struct RpolyComplex {
     pub im: f64,
 }
 
-pub struct RpolyRoots<const MDP1: usize>([RpolyComplex; MDP1]);
+pub struct RpolyRoots<const MDP1: usize>(pub [RpolyComplex; MDP1]);
 
 pub struct RpolyRootsIntoIterator<const MDP1: usize> {
     data: [RpolyComplex; MDP1],
@@ -84,6 +84,10 @@ impl<const MDP1: usize> RpolyRoots<MDP1> {
     pub fn root_count(&self) -> usize {
         MDP1 - 1
     }
+
+    pub fn to_vec(&self) -> Vec<RpolyComplex> {
+        self.0[..MDP1 - 1].to_vec()
+    }
 }
 
 impl<const MDP1: usize> IntoIterator for RpolyRoots<MDP1> {
@@ -99,13 +103,26 @@ impl<const MDP1: usize> IntoIterator for RpolyRoots<MDP1> {
     }
 }
 
-/// n == a.len() == MDP1
+/// Solve the polynomial given by:
 ///
-/// This function solves the following equation:
+/// a\[0\]*x^(n-1) + a\[1\]*x^(n-2) + ... + a\[n-2\]*x + a\[n-1\] = 0
 ///
-/// a\[0\]*x^(n-1) + a\[1\]*x^(n-2) + ... + a\[n-2\]*x + a\[n-1\] == 0
+/// where `n == a.len() == MDP1`.
 ///
-/// Please ensure that a\[0\] != 0.0
+/// # Errors
+///
+/// - [`RpolyLeadingCoefficientZero`]: If `a[0] == 0.0`.
+/// - [`RpolyNotConvergent`]: If the method fails to converge.
+///
+/// # Examples
+///
+/// ```
+/// # use rpoly::rpoly;
+/// #
+/// let roots = rpoly(&[1.0, -3.0, 2.0]).unwrap();  // x^2 - 3x + 2 = 0
+/// assert_eq!(roots.root_count(), 2);
+/// ```
+///
 pub fn rpoly<const MDP1: usize>(a: &[f64; MDP1]) -> Result<RpolyRoots<MDP1>, RpolyError> {
     let mut degree = MDP1 - 1;
     let mut zeror = [0.0; MDP1];
