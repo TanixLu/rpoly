@@ -12,5 +12,5 @@ repository = "https://github.com/TanixLu/rpoly"
 keywords = ["polynomial", "numerical", "roots", "root-finding", "math"]
 categories = ["algorithms", "mathematics"]
 
-[dependencies]
+[dev-dependencies]
 rand = "0.8.5"

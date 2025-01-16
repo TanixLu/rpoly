@@ -1,3 +1,10 @@
+//! The file is manually converted from the C++ code found at <https://www.akiti.ca/rpoly_ak1_Intro.html>
+
+#![allow(non_snake_case, non_upper_case_globals)]
+
+pub const LEADING_COEFFICIENT_ZERO_NUM: usize = usize::MAX;
+pub const NOT_CONVERGENT_NUM: usize = usize::MAX - 1;
+
 const FLT_MIN: f64 = f32::MIN_POSITIVE as f64;
 const FLT_MAX: f64 = f32::MAX as f64;
 const DBL_EPSILON: f64 = f64::EPSILON;
@@ -186,7 +193,7 @@ pub fn rpoly_ak1<const MDP1: usize>(
             let bb = p[NM1];
             let mut zerok = K[NM1] == 0.0;
 
-            for jj in 0..5 {
+            for _ in 0..5 {
                 let cc = K[NM1];
                 if zerok {
                     // Use unscaled form of recurrence
@@ -276,14 +283,14 @@ pub fn rpoly_ak1<const MDP1: usize>(
                 // Return with failure if no convergence with 20 shifts
                 if jj == 20 {
                     //Failure. No convergence after 20 shifts. Program terminated.
-                    *Degree = usize::MAX - 1;
+                    *Degree = NOT_CONVERGENT_NUM;
                     return;
                 }
             } // End for jj
         } // End while (N >= 1)
     } else {
         //The leading coefficient is zero. No further action taken. Program terminated.
-        *Degree = usize::MAX;
+        *Degree = LEADING_COEFFICIENT_ZERO_NUM;
         return;
     }
 }
@@ -314,9 +321,11 @@ fn Fxshfr_ak1<const MDP1: usize>(
     let mut betas = 0.25;
     let mut betav = 0.25;
     let u = -(2.0 * sr);
-    let oss = sr;
+    let mut oss = sr;
     let v = bnd;
-    let ovv = bnd;
+    let mut ovv = bnd;
+    let mut otv = 0.0;
+    let mut ots = 0.0;
 
     // Evaluate polynomial by synthetic division
     let mut a = 0.0;
@@ -330,7 +339,6 @@ fn Fxshfr_ak1<const MDP1: usize>(
         v, &mut qk,
     );
 
-    let [mut ovv, mut oss, mut otv, mut ots] = [0.0; 4];
     for j in 0..L2 {
         // Calculate next K polynomial and estimate v
         nextK_ak1(N, tFlag, a, b, a1, &mut a3, &mut a7, K, &mut qk, qp);
@@ -498,11 +506,12 @@ fn RealIT_ak1(
     // NZ - number of zeros found
     // iFlag - flag to indicate a pair of zeros near real axis
 
-    let i = 0;
     let mut j = 0;
     let nm1 = N - 1;
 
-    let [ee, mut kv, mp, ms, mut omp, pv, s, mut t] = [0.0; 8];
+    let mut kv;
+    let mut omp = 0.0;
+    let mut t = 0.0;
 
     *NZ = 0;
     *iFlag = false;
@@ -628,7 +637,7 @@ fn QuadIT_ak1(
 
     let mut j = 0;
     let mut triedFlag = false;
-    let mut tFlag = 0;
+    let mut tFlag;
 
     let mut relstp = 0.0;
     let mut omp = 0.0;
@@ -700,7 +709,7 @@ fn QuadIT_ak1(
 
                 QuadSD_ak1(NN, u, v, p, qp, a, b);
 
-                for i in 0..5 {
+                for _ in 0..5 {
                     tFlag = calcSC_ak1(N, *a, *b, a1, a3, a7, &mut c, d, e, f, g, h, K, u, v, qk);
                     nextK_ak1(N, tFlag, *a, *b, *a1, a3, a7, K, qk, qp);
                 }
@@ -903,9 +912,8 @@ fn QuadSD_ak1(NN: usize, u: f64, v: f64, p: &mut [f64], q: &mut [f64], a: &mut f
 }
 
 fn Quad_ak1(a: f64, b1: f64, c: f64, sr: &mut f64, si: &mut f64, lr: &mut f64, li: &mut f64) {
-    let mut b: f64 = 0.;
-    let mut d: f64 = 0.;
-    let mut e: f64 = 0.;
+    let mut d: f64;
+    let mut e: f64;
     *li = 0.0f64;
     *lr = *li;
     *si = *lr;
@@ -918,7 +926,7 @@ fn Quad_ak1(a: f64, b1: f64, c: f64, sr: &mut f64, si: &mut f64, lr: &mut f64, l
         *lr = -(b1 / a);
         return;
     }
-    b = b1 / 2.0f64;
+    let b = b1 / 2.0f64;
     if fabs(b) < fabs(c) {
         e = if c >= 0.0 { a } else { -a };
         e = -e + b * (b / fabs(c));
@@ -1006,7 +1014,7 @@ fn test_real_roots() {
             not_convergent_num += 1;
             // *************** debug ***************
             // if Degree == usize::MAX {
-            //     println!("leading coeffcient zero");
+            //     println!("leading coefficient zero");
             //     assert!(false);
             // } else if Degree == usize::MAX - 1 {
             //     println!("Not convergent");
