@@ -1,6 +1,6 @@
 [package]
 name = "rpoly"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 authors = ["Tanix <txlu@mail.ustc.edu.cn>"]
 license = "MIT OR Apache-2.0"
