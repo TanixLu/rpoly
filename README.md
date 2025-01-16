@@ -109,16 +109,6 @@ match result {
 
 ---
 
-## Testing
-
-This crate includes a comprehensive test suite to validate correctness. To run the tests, use:
-
-```bash
-cargo test
-```
-
----
-
 ## Contributing
 
 Contributions are welcome! Feel free to submit pull requests or issues on [GitHub](https://github.com/TanixLu/rpoly).
