@@ -1,44 +1,4 @@
-//! # Rpoly - Polynomial Root Finding in Rust
-//!
-//! This crate provides a Rust interface for finding the roots of real-coefficient polynomials using
-//! an adapted version of the RPOLY algorithm. The core logic in [`rpoly_ak1.rs`] is manually converted
-//! from the C++ code found at <https://www.akiti.ca/rpoly_ak1_Intro.html>.
-//!
-//! The primary entry point is the [`rpoly`] function, which returns the roots of a polynomial of
-//! degree \(n - 1\). The polynomial is expressed in the form
-//!
-//! a\[0\]*x^(n-1) + a\[1\]*x^(n-2) + ... + a\[n-2\]*x + a\[n-1\] = 0
-//!
-//! where `n == MDP1`. Thus, `a.len()` must be `MDP1`, and the degree is `MDP1 - 1`. It is essential
-//! that `a[0] != 0.0` (the leading coefficient must not be zero).
-//!
-//! ## Usage
-//!
-//! 1. Include this crate in your `Cargo.toml`.
-//! 2. Call [`rpoly`] with an array of type `[f64; MDP1]` representing the polynomial coefficients.
-//! 3. If successful, [`rpoly`] returns an [`RpolyRoots`] struct, which you can iterate to get
-//!    [`RpolyComplex`] roots (both real and imaginary parts).
-//!
-//! ## Examples
-//!
-//! ```rust
-//! use rpoly::{rpoly, RpolyComplex};
-//!
-//! // Solve x^2 - 5x + 6 = 0, i.e., roots should be x = 2.0 and x = 3.0
-//! let coefficients = [1.0, -5.0, 6.0];
-//! let roots = rpoly(&coefficients).unwrap();
-//! assert_eq!(roots.root_count(), 2);
-//!
-//! for root in roots {
-//!     println!("Root = {} + {}i", root.re, root.im);
-//! }
-//! ```
-//!
-//! ## Error Handling
-//!
-//! If the leading coefficient `a[0]` is zero, you will get an error of type [`RpolyError::RpolyLeadingCoefficientZero`].
-//! If the method fails to converge, it returns [`RpolyError::RpolyNotConvergent`]. Handle these cases
-//! by matching against the `Result` type returned by [`rpoly`].
+#![doc = include_str!("../README.md")]
 
 mod rpoly_ak1;
 
