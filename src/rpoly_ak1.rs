@@ -182,8 +182,8 @@ pub fn rpoly_ak1<const MDP1: usize>(
             }
             K[0] = p[0];
 
-            let mut aa = p[N];
-            let mut bb = p[NM1];
+            let aa = p[N];
+            let bb = p[NM1];
             let mut zerok = K[NM1] == 0.0;
 
             for jj in 0..5 {
@@ -313,10 +313,10 @@ fn Fxshfr_ak1<const MDP1: usize>(
     *NZ = 0;
     let mut betas = 0.25;
     let mut betav = 0.25;
-    let mut u = -(2.0 * sr);
-    let mut oss = sr;
-    let mut v = bnd;
-    let mut ovv = bnd;
+    let u = -(2.0 * sr);
+    let oss = sr;
+    let v = bnd;
+    let ovv = bnd;
 
     // Evaluate polynomial by synthetic division
     let mut a = 0.0;
@@ -344,11 +344,11 @@ fn Fxshfr_ak1<const MDP1: usize>(
             tFlag, &mut ui, &mut vi, a, a1, a3, a7, b, c, d, f, g, h, u, v, K, N, p,
         );
 
-        let mut vv = vi;
+        let vv = vi;
 
         // Estimate s
 
-        let mut ss = if K[N - 1] != 0.0 {
+        let ss = if K[N - 1] != 0.0 {
             -(p[N] / K[N - 1])
         } else {
             0.0
@@ -369,8 +369,8 @@ fn Fxshfr_ak1<const MDP1: usize>(
 
             // If decreasing, multiply the two most recent convergence measures
 
-            let mut tvv = if tv < otv { tv * otv } else { 1.0 };
-            let mut tss = if ts < ots { ts * ots } else { 1.0 };
+            let tvv = if tv < otv { tv * otv } else { 1.0 };
+            let tss = if ts < ots { ts * ots } else { 1.0 };
 
             // Compare with convergence criteria
 
@@ -498,11 +498,11 @@ fn RealIT_ak1(
     // NZ - number of zeros found
     // iFlag - flag to indicate a pair of zeros near real axis
 
-    let mut i = 0;
+    let i = 0;
     let mut j = 0;
     let nm1 = N - 1;
 
-    let [mut ee, mut kv, mut mp, mut ms, mut omp, mut pv, mut s, mut t] = [0.0; 8];
+    let [ee, mut kv, mp, ms, mut omp, pv, s, mut t] = [0.0; 8];
 
     *NZ = 0;
     *iFlag = false;
@@ -518,11 +518,11 @@ fn RealIT_ak1(
             qp[i] = pv;
         }
 
-        let mut mp = fabs(pv);
+        let mp = fabs(pv);
 
         // Compute a rigorous bound on the error in evaluating p
 
-        let mut ms = fabs(s);
+        let ms = fabs(s);
         let mut ee = 0.5 * fabs(qp[0]);
         for i in 1..NN {
             ee = ee * ms + fabs(qp[i]);
@@ -655,13 +655,13 @@ fn QuadIT_ak1(
 
         QuadSD_ak1(NN, u, v, p, qp, a, b);
 
-        let mut mp = fabs(-((*szr) * (*b)) + (*a)) + fabs((*szi) * (*b));
+        let mp = fabs(-((*szr) * (*b)) + (*a)) + fabs((*szi) * (*b));
 
         // Compute a rigorous bound on the rounding error in evaluating p
 
-        let mut zm = sqrt(fabs(v));
+        let zm = sqrt(fabs(v));
         let mut ee = 2.0 * fabs(qp[0]);
-        let mut t = -((*szr) * (*b));
+        let t = -((*szr) * (*b));
 
         for i in 1..N {
             ee = ee * zm + fabs(qp[i]);
@@ -1003,6 +1003,7 @@ fn test_real_roots() {
         rpoly_ak1(&op, &mut Degree, &mut zeror, &mut zeroi);
 
         if Degree == usize::MAX || Degree == usize::MAX - 1 {
+            not_convergent_num += 1;
             // *************** debug ***************
             // if Degree == usize::MAX {
             //     println!("leading coeffcient zero");
@@ -1010,7 +1011,6 @@ fn test_real_roots() {
             // } else if Degree == usize::MAX - 1 {
             //     println!("Not convergent");
             // }
-            // not_convergent_num += 1;
             // dbg!(op);
             // for i in 0..real_roots_num + 1 {
             //     if real_roots_num - i > 0 {
