@@ -1,67 +1,14 @@
 #![doc = include_str!("../README.md")]
 
 mod rpoly_ak1;
+mod rpoly_types;
 
 use rpoly_ak1::{rpoly_ak1, LEADING_COEFFICIENT_ZERO_NUM, NOT_CONVERGENT_NUM};
-
-#[derive(Debug, Clone, Copy, Default)]
-pub struct RpolyComplex {
-    pub re: f64,
-    pub im: f64,
-}
-
-pub struct RpolyRoots<const MDP1: usize>(pub [RpolyComplex; MDP1]);
-
-pub struct RpolyRootsIntoIterator<const MDP1: usize> {
-    data: [RpolyComplex; MDP1],
-    index: usize,
-}
-
-#[derive(Debug)]
-pub enum RpolyError {
-    RpolyLeadingCoefficientZero,
-    RpolyNotConvergent,
-}
-
-pub use RpolyError::RpolyLeadingCoefficientZero;
-pub use RpolyError::RpolyNotConvergent;
-
-impl<const MDP1: usize> Iterator for RpolyRootsIntoIterator<MDP1> {
-    type Item = RpolyComplex;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let result = if self.index + 1 < MDP1 {
-            self.data[self.index]
-        } else {
-            return None;
-        };
-        self.index += 1;
-        Some(result)
-    }
-}
-
-impl<const MDP1: usize> RpolyRoots<MDP1> {
-    pub fn root_count(&self) -> usize {
-        MDP1 - 1
-    }
-
-    pub fn to_vec(&self) -> Vec<RpolyComplex> {
-        self.0[..MDP1 - 1].to_vec()
-    }
-}
-
-impl<const MDP1: usize> IntoIterator for RpolyRoots<MDP1> {
-    type Item = RpolyComplex;
-
-    type IntoIter = RpolyRootsIntoIterator<MDP1>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        RpolyRootsIntoIterator {
-            data: self.0,
-            index: 0,
-        }
-    }
-}
+pub use rpoly_types::{
+    RpolyComplex, RpolyError,
+    RpolyError::{RpolyLeadingCoefficientZero, RpolyNotConvergent},
+    RpolyRoots,
+};
 
 /// Solve the polynomial given by:
 ///
