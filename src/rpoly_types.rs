@@ -71,7 +71,7 @@ impl<const MDP1: usize> Iterator for RpolyRootsIntoIterator<MDP1> {
     type Item = RpolyComplex;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index < MDP1 {
+        if self.index + 1 < MDP1 {
             let result = self.data[self.index];
             self.index += 1;
             Some(result)
