@@ -117,4 +117,4 @@ Contributions are welcome! Feel free to submit pull requests or issues on [GitHu
 
 ## License
 
-This crate is distributed under the MIT OR Apache-2.0 License. See LICENSE-MIT and LICENSE-APACHE for more details.
+The program was initially published as a FORTRAN program at [Netlib TOMS](https://www.netlib.org/toms/index.html#:~:text=ACM%2018%20200-,file%3A%20493.gz,-keywords%3A%20polynomial) and adhered to the [ACM software copyright notice](https://www.acm.org/publications/policies/software-copyright-notice). Later, it was translated into a C++ program available at [Akiti](https://www.akiti.ca/rpoly_ak1_Intro.html). I have translated this C++ program into Rust, and therefore, this program continues to comply with the ACM copyright policy. See LICENSE-ACM for more details.
