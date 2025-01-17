@@ -1,9 +1,9 @@
 [package]
 name = "rpoly"
-version = "0.2.7"
+version = "0.2.8"
 edition = "2021"
 authors = ["Tanix <txlu@mail.ustc.edu.cn>"]
-license = "ACM"
+license-file = "LICENSE-ACM"
 readme = "README.md"
 include = ["src/", "LICENSE-ACM"]
 description = "An implementation of the RPOLY algorithm for finding all roots of a real-coefficient univariate polynomial"
