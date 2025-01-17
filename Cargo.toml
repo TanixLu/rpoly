@@ -1,6 +1,6 @@
 [package]
 name = "rpoly"
-version = "0.2.6"
+version = "0.2.7"
 edition = "2021"
 authors = ["Tanix <txlu@mail.ustc.edu.cn>"]
 license = "ACM"
