@@ -46,7 +46,7 @@ fn main() {
 ```
 
 Output:
-```
+```ignore
 Number of roots: 2
 Root = 1.9999999999999998 + 0i
 Root = 3.0000000000000004 + 0i
@@ -60,7 +60,7 @@ Root = 3.0000000000000004 + 0i
 
 #### `rpoly`
 
-```rust
+```rust,ignore
 pub fn rpoly<const MDP1: usize>(
     a: &[f64; MDP1],
 ) -> Result<RpolyRoots<MDP1>, RpolyError>

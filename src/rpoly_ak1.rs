@@ -21,10 +21,6 @@ fn log(x: f64) -> f64 {
     x.ln()
 }
 
-fn exp(x: f64) -> f64 {
-    x.exp()
-}
-
 fn pow(x: f64, p: i32) -> f64 {
     x.powi(p)
 }
@@ -129,62 +125,26 @@ pub fn rpoly_ak1<const MDP1: usize>(
             }
 
             // Compute lower bound on moduli of zeros
-
-            let mut pt = [0.0; MDP1];
-            for i in 0..NN {
-                pt[i] = fabs(p[i]);
-            }
-            pt[N] = -(pt[N]);
-
             let NM1 = N - 1;
-
-            // Compute upper estimate of bound
-            let mut x = exp((log(-pt[N]) - log(pt[0])) / N as f64);
-
-            if pt[NM1] != 0.0 {
-                // If Newton step at the origin is better, use it
-                let xm = -pt[N] / pt[NM1];
-                if xm < x {
-                    x = xm;
+            let bnd = {
+                let a = &p;
+                let n = N;
+                let r = a[n].abs().ln();
+                let mut temp = ((r - a[0].abs().ln()) / n as f64).exp();
+                for i in 1..n {
+                    if a[i] != 0.0 {
+                        let t = ((r - a[i].abs().ln()) / (n - i) as f64).exp();
+                        temp = temp.min(t);
+                    }
                 }
-            }
-
-            // Chop the interval (0, x) until ff <= 0
-
-            let mut xm = x;
-            loop {
-                x = xm;
-                xm = 0.1 * x;
-                let mut ff = pt[0];
-                for i in 1..NN {
-                    ff = ff * xm + pt[i];
-                }
-                if !(ff > 0.0) {
-                    break;
-                }
-            }
-
-            let mut dx = x;
-
-            // Do Newton iteration until x converges to two decimal places
-            while fabs(dx / x) > 0.005 {
-                let mut ff = pt[0];
-                let mut df = pt[0];
-                for i in 1..N {
-                    ff = x * ff + pt[i];
-                    df = x * df + ff;
-                }
-                ff = x * ff + pt[N];
-                dx = ff / df;
-                x -= dx;
-            }
-
-            let bnd = x;
+                0.5 * temp
+            };
 
             // Compute the derivative as the initial K polynomial and do 5 steps with no shift
 
             let mut K = [0.0; MDP1];
             for i in 1..N {
+                // N is degree
                 K[i] = ((N - i) as f64) * p[i] / (N as f64);
             }
             K[0] = p[0];
